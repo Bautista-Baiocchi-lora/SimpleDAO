@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.2;
 
-contract DAOProposal {
+import "../../interfaces/IProposal.sol";
+
+contract Proposal is IProposal {
 
     event newPledge(address pledged);
     event unPledged(address unpledged);
@@ -12,23 +14,23 @@ contract DAOProposal {
     mapping(address => bool) public pledges;
 
     modifier isAlive {
-        require(block.number < end_block, "DAOPropostal::Proposal has closed.");
+        require(block.number < end_block, "Proposal::Proposal has closed.");
         _;
     }
 
     modifier isNotPledged {
-        require(pledges[msg.sender] == false, "DAOProposol::Wallet has already pledged.");
+        require(pledges[msg.sender] == false, "Proposal::Wallet has already pledged.");
         _;
     }
 
     modifier isPledged {
-        require(pledges[msg.sender] == false, "DAOProposol::Wallet has already pledged.");
+        require(pledges[msg.sender] == false, "Proposal::Wallet has already pledged.");
         _;
     }
 
-    constructor(uint256 _end_block, uint256 _required_support){
-        end_block = _end_block;
-        required_support = _required_support;
+    constructor(IProposal.ProposalParams memory params){
+        end_block = params._end_block;
+        required_support = params._required_support;
     }
 
     function pledgeSupport() public isNotPledged isAlive {

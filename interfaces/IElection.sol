@@ -2,12 +2,15 @@
 pragma solidity ^0.8.2;
 
 
-contract IElection {
+interface IElection {
 
     struct ElectionParams {
-        address _token;
-        uint256 _end_block;
-        uint256 _required_support;
+        address token;
+        address vault;
+        address proposal;
+        uint256 start_block;
+        uint256 end_block;
+        uint256 required_support;
     }
 
     enum Vote {
@@ -15,7 +18,11 @@ contract IElection {
         NEGATIVE
     }
 
-    event newVote(address voter, Vote choice, uint256 pledge);
+    event newVote(address voter, Vote choice, uint256 stake);
+
+    function getStartBlock() external view returns(uint256);
+
+    function getEndBlock() external view returns(uint256);
 
 }
 

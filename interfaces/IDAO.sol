@@ -4,13 +4,15 @@ pragma solidity ^0.8.2;
 
 interface IDAO {
 
-    event ProposalStarted(uint256 start_block);
-    event ProposalFinished(uint256 end_block, bool passed, uint256 total_support);
+    event ProposalStarted(uint256 start_block, uint256 end_block);
+    event ProposalFinished(bool passed, uint256 total_support);
 
     event ElectionStarted(uint256 start_block);
 
+    event VaultCreated(address token, address owner);
+
     struct DAOParams {
-        address _token;
+        address token;
     }
 
     enum State {

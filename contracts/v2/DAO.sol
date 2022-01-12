@@ -8,9 +8,11 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "../../interfaces/IDAO.sol";
 import "../../interfaces/IProposal.sol";
 import "../../interfaces/IElection.sol";
+import "../../interfaces/IVault.sol";
 
 import "./Election.sol";
 import "./Proposal.sol";
+import "./Vault.sol";
 
 contract DAO is IDAO, Ownable{
     uint256 constant private time_horizon = 1000;
@@ -18,6 +20,7 @@ contract DAO is IDAO, Ownable{
     IDAO.State public STATE;
     IProposal public proposal;
     IElection public election;
+    IVault public vault;
 
     IERC20 private token;
     uint256 start_block;
@@ -33,9 +36,9 @@ contract DAO is IDAO, Ownable{
     }
 
     constructor(IDAO.DAOParams memory params){
-            require(params._token != address(0) ,"DAO::Token address null.");
+            require(params.token != address(0) ,"DAO::Token address null.");
 
-            token = IERC20(params._token);   
+            token = IERC20(params.token);   
             start_block = block.number;
             STATE = IDAO.State.FRESH;
         }
@@ -43,15 +46,22 @@ contract DAO is IDAO, Ownable{
     function intatiateProposal(bytes32 title, string memory info) public onlyOwner isState(State.FRESH) {
         STATE = IDAO.State.PROPOSAL;
 
+        //create proposal
         proposal = Factory.proposal(title, info, time_horizon, 1000);
-        emit IDAO.ProposalStarted(proposal.getStartBlock());
+        emit IDAO.ProposalStarted(proposal.getStartBlock(), proposal.getEndBlock());
     }
 
     function startElection() public onlyOwner isState(State.PROPOSAL) proposalPassed {
-        emit IDAO.ProposalFinished(proposal.getEndBlock(), proposal.isPassed(), proposal.getTotalSupport());
+        emit IDAO.ProposalFinished(proposal.isPassed(), proposal.getTotalSupport());
         STATE = IDAO.State.ELECTION;
 
-        election = Factory.election(address(token), time_horizon, token.totalSupply() / 2 + 1);
+        //create vault to store DAO tokens during election
+        vault = Factory.vault(address(token));
+        emit IDAO.VaultCreated(address(token), address(this));
+
+        //create election
+        election = Factory.election(address(address(token)), address(vault), address(proposal), time_horizon, token.totalSupply() / 2 + 1);
+        emit IDAO.ElectionStarted(election.getStartBlock());
     }
 
 
@@ -60,30 +70,41 @@ contract DAO is IDAO, Ownable{
 library Factory {
 
     function proposal(
-        bytes32 title,
-        string memory info,
-        uint256 horizon, 
-        uint256 required_support
+        bytes32 _title,
+        string memory _info,
+        uint256 _horizon, 
+        uint256 _required_support
         ) internal returns(Proposal){
         return new Proposal(IProposal.ProposalParams({
-            _title: title,
-            _info: info,  
-            _start_block: block.number,
-            _end_block: block.number + horizon, 
-            _required_support: required_support
+            title: _title,
+            info: _info,  
+            start_block: block.number,
+            end_block: block.number + _horizon, 
+            required_support: _required_support
         }));
     }
 
     function election(
-        address token, 
-        uint256 horizon, 
-        uint256 required_support
+        address _token, 
+        address _vault,
+        address _proposal,
+        uint256 _horizon, 
+        uint256 _required_support
         ) internal returns(Election){
         return new Election(IElection.ElectionParams({
-            _token: token,
-            _end_block: block.number + horizon,
-            _required_support: required_support
+            token: _token,
+            vault: _vault,
+            proposal: _proposal,
+            start_block: block.number,
+            end_block: block.number + _horizon,
+            required_support: _required_support
         }));
+    }
+
+    function vault(
+        address token
+    ) internal returns(Vault){
+        return new Vault(token);
     }
 
 

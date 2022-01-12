@@ -54,15 +54,15 @@ contract Election is IElection {
         emit IElection.newVote(msg.sender, choice, amount);
     }
 
-    function isUpForVote() public view returns (bool) {
+    function isUpForVote() override public view returns (bool) {
         return block.number < end_block;
     }
 
-    function isPassing() public view returns (bool) {
+    function isPassing() override public view returns (bool) {
         return total_support > required_support;
     }
 
-    function isPassed() public view returns(bool) {
+    function isPassed() override public view returns(bool) {
         return !isUpForVote() && isPassing();
     }
 

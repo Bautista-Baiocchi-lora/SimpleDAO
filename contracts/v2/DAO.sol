@@ -35,6 +35,11 @@ contract DAO is IDAO, Ownable{
         _;
     }
 
+    modifier electionFinished {
+        require(!election.isUpForVote(), "DAO::Election is not finished.");
+        _;
+    }
+
     constructor(IDAO.DAOParams memory params){
             require(params.token != address(0) ,"DAO::Token address null.");
 
@@ -62,6 +67,15 @@ contract DAO is IDAO, Ownable{
         //create election
         election = Factory.election(address(token), address(vault), address(proposal), time_horizon, token.totalSupply() / 2 + 1);
         emit IDAO.ElectionStarted(election.getStartBlock());
+    }
+
+    function finishElection() public onlyOwner isState(State.ELECTION) electionFinished {
+        emit IDAO.ElectionFinished(election.getEndBlock(), election.isPassed());
+        STATE = IDAO.State.RESULT;
+
+        //don't allow anymore deposits
+        vault.pause();
+        vault.releaseAllFunds();
     }
 
 

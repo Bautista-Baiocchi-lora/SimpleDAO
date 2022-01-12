@@ -29,5 +29,11 @@ interface IElection {
 
     function getEndBlock() external view returns(uint256);
 
+    function isPassing() external view returns(bool);
+
+    function isUpForVote() external view returns(bool);
+
+    function isPassed() external view returns(bool);
+
 }
 

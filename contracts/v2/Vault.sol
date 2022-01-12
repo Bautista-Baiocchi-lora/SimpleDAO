@@ -4,10 +4,11 @@ pragma solidity ^0.8.2;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/security/Pausable.sol";
 
 import "../../interfaces/IVault.sol";
 
-contract Vault is IVault, Ownable {
+contract Vault is IVault, Ownable, Pausable {
 
     mapping(address => uint256) public deposits;
     address[] private wallets;
@@ -19,7 +20,10 @@ contract Vault is IVault, Ownable {
         token = IERC20(_token);
     }
 
-    function storeFunds(address payable sender, uint256 amount) override public payable {
+    function storeFunds(
+        address payable sender, 
+        uint256 amount
+        ) override public payable whenNotPaused {
         require(token.allowance(address(this), sender) >= amount, "Vault::Insufficient balance.");
         require(token.transferFrom(sender, address(this), amount), "Vault::Transfer failed."); //emits event
         uint256 current_deposit = deposits[sender];

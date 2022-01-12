@@ -12,14 +12,6 @@ interface IProposal {
         uint256 required_support;
     }
 
-    struct Result {
-        bool passed;
-        uint256 end_block;
-        uint256 total_support;
-        uint256 required_support;
-        mapping(address => bool) pledges;
-    }
-
     function isPassing() external view returns (bool);
 
     function isUpForVote() external view returns (bool);

@@ -6,6 +6,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import "../../interfaces/IElection.sol";
 import "../../interfaces/IProposal.sol";
+import "../../interfaces/IVault.sol";
 
 contract Election is IElection {
 
@@ -14,9 +15,9 @@ contract Election is IElection {
     uint256 private end_block;
     uint256 private total_support;
     uint256 private required_support;
-    mapping(address => uint256) public tokens_pledged;
-    mapping(address => Vote) public votes;
+    mapping(address => IElection.Ballot) public ballots;
     IERC20 private token;
+    IVault private vault;
 
     modifier isAlive {
         require(block.number < end_block, "Election::Voting has closed.");
@@ -24,16 +25,19 @@ contract Election is IElection {
     }
 
     modifier hasNotVoted {
-        require(tokens_pledged[msg.sender] == 0, "Election::Wallet has voted already.");
+        require(ballots[msg.sender].stake == 0, "Election::Wallet has voted already.");
         _;
     }
 
     constructor(IElection.ElectionParams memory params){
         require(params.token != address(0), "Election::ERC20 address null.");
         require(params.proposal != address(0), "Election::Proposal address null.");
+        require(params.vault != address(0), "Election::Vault address null.");
         require(IProposal(params.proposal).isPassed(), "Election::Proposal is not passed.");
+        require(IVault(params.vault).getAcceptedToken() == params.token, "Election::Incompatible vault.");
 
         token = IERC20(params.token);
+        vault = IVault(params.vault);
         proposal = params.proposal;
         start_block = params.start_block;
         end_block = params.end_block;
@@ -42,9 +46,10 @@ contract Election is IElection {
 
     function vote(uint256 amount, Vote choice) public payable hasNotVoted isAlive {
         require(token.balanceOf(msg.sender) < amount, "Election::Insufficient balance.");
-        tokens_pledged[msg.sender] = amount;
+        vault.storeFunds(payable(msg.sender), amount);
+        
         total_support += amount;
-        votes[msg.sender] = choice;
+        ballots[msg.sender] = IElection.Ballot({stake: amount, vote: choice});
 
         emit IElection.newVote(msg.sender, choice, amount);
     }

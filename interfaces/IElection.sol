@@ -18,6 +18,11 @@ interface IElection {
         NEGATIVE
     }
 
+    struct Ballot {
+        uint256 stake;
+        Vote vote;
+    }
+
     event newVote(address voter, Vote choice, uint256 stake);
 
     function getStartBlock() external view returns(uint256);

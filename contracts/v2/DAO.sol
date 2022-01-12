@@ -60,7 +60,7 @@ contract DAO is IDAO, Ownable{
         emit IDAO.VaultCreated(address(token), address(this));
 
         //create election
-        election = Factory.election(address(address(token)), address(vault), address(proposal), time_horizon, token.totalSupply() / 2 + 1);
+        election = Factory.election(address(token), address(vault), address(proposal), time_horizon, token.totalSupply() / 2 + 1);
         emit IDAO.ElectionStarted(election.getStartBlock());
     }
 

@@ -4,7 +4,7 @@ pragma solidity ^0.8.2;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-contract DAOVoting {
+contract Election {
 
     struct ElectionParams {
         address _token;
@@ -27,17 +27,17 @@ contract DAOVoting {
     IERC20 private token;
 
     modifier isAlive {
-        require(block.number < end_block, "DAOVoting::Voting has closed.");
+        require(block.number < end_block, "Election::Voting has closed.");
         _;
     }
 
     modifier hasNotVoted {
-        require(tokens_pledged[msg.sender] == 0, "DAOVoting::Wallet has voted already.");
+        require(tokens_pledged[msg.sender] == 0, "Election::Wallet has voted already.");
         _;
     }
 
     constructor(ElectionParams memory params){
-        require(params._token != address(0), "DAOVoting::ERC20 address null.");
+        require(params._token != address(0), "Election::ERC20 address null.");
 
         token = IERC20(params._token);
         end_block = params._end_block;
@@ -45,7 +45,7 @@ contract DAOVoting {
     }
 
     function vote(uint256 amount, Vote choice) public hasNotVoted isAlive {
-        require(token.balanceOf(msg.sender) < amount, "DAOVoting::Insufficient balance.");
+        require(token.balanceOf(msg.sender) < amount, "Election::Insufficient balance.");
         tokens_pledged[msg.sender] = amount;
         total_support += amount;
         votes[msg.sender] = choice;

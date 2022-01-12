@@ -8,13 +8,14 @@ contract Proposal is IProposal {
     event newPledge(address pledged);
     event unPledged(address unpledged);
 
-    uint256 public end_block;
-    uint256 public total_support;
-    uint256 public required_support;
+    uint256 private _end_block;
+    uint256 private _start_block;
+    uint256 private _total_support;
+    uint256 private _required_support;
     mapping(address => bool) public pledges;
 
     modifier isAlive {
-        require(block.number < end_block, "Proposal::Proposal has closed.");
+        require(block.number < _end_block, "Proposal::Proposal has closed.");
         _;
     }
 
@@ -29,34 +30,51 @@ contract Proposal is IProposal {
     }
 
     constructor(IProposal.ProposalParams memory params){
-        end_block = params._end_block;
-        required_support = params._required_support;
+        _start_block = params._start_block;
+        _end_block = params._end_block;
+        _required_support = params._required_support;
     }
 
-    function pledgeSupport() public isNotPledged isAlive {
+    function pledgeSupport() override public isNotPledged isAlive {
         pledges[msg.sender] = true;
-        total_support += 1;
+        _total_support += 1;
 
         emit newPledge(msg.sender);
     }
 
-    function unpledgeSupport() public isPledged isAlive {
+    function unpledgeSupport() override public isPledged isAlive {
         pledges[msg.sender] = false;
-        total_support -= 1;
+        _total_support -= 1;
 
         emit unPledged(msg.sender);
     }
 
-    function isUpForVote() public view returns (bool) {
-        return block.number < end_block;
+    function isUpForVote() override public view returns (bool) {
+        return block.number < _end_block;
     }
 
-    function isPassing() public view returns (bool) {
-        return total_support > required_support;
+    function isPassing() override public view returns (bool) {
+        return _total_support > _required_support;
     }
 
-    function isPassed() public view returns(bool) {
+    function isPassed() override public view returns(bool) {
         return !isUpForVote() && isPassing();
+    }
+
+    function getStartBlock() override external view returns(uint256){
+        return _start_block;
+    }
+
+    function getEndBlock() override external view returns(uint256){
+        return _end_block;
+    } 
+
+    function getRequiredSupport() override external view returns(uint256){
+        return _required_support;
+    }
+
+    function getTotalSupport() override external view returns(uint256){
+        return _total_support;
     }
 
 }

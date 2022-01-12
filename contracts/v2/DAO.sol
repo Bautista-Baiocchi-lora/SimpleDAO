@@ -44,14 +44,15 @@ contract DAO is IDAO, Ownable{
         STATE = IDAO.State.PROPOSAL;
 
         proposal = Factory.proposal(title, info, time_horizon, 1000);
-        emit IDAO.ProposalStarted(proposal.getStartBlock());
+        emit IDAO.ProposalStarted(proposal.getStartBlock(), proposal.getEndBlock());
     }
 
     function startElection() public onlyOwner isState(State.PROPOSAL) proposalPassed {
-        emit IDAO.ProposalFinished(proposal.getEndBlock(), proposal.isPassed(), proposal.getTotalSupport());
+        emit IDAO.ProposalFinished(proposal.isPassed(), proposal.getTotalSupport());
         STATE = IDAO.State.ELECTION;
 
-        election = Factory.election(address(token), time_horizon, token.totalSupply() / 2 + 1);
+        election = Factory.election(address(token), address(proposal), time_horizon, token.totalSupply() / 2 + 1);
+        emit IDAO.ElectionStarted(election.getStartBlock());
     }
 
 
@@ -76,11 +77,14 @@ library Factory {
 
     function election(
         address token, 
+        address proposal,
         uint256 horizon, 
         uint256 required_support
         ) internal returns(Election){
         return new Election(IElection.ElectionParams({
             _token: token,
+            _proposal: proposal,
+            _start_block: block.number,
             _end_block: block.number + horizon,
             _required_support: required_support
         }));

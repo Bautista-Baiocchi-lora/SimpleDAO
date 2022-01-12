@@ -1,56 +1,89 @@
-
-
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.2;
 
 
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
-import "./DAOProposal.sol";
+import "../../interfaces/IDAO.sol";
+import "../../interfaces/IProposal.sol";
+import "../../interfaces/IElection.sol";
 
-contract DAO is Ownable{
+import "./Election.sol";
+import "./Proposal.sol";
+
+contract DAO is IDAO, Ownable{
     uint256 constant private time_horizon = 1000;
 
-    enum State {
-        FRESH, PROPOSAL, VOTE, RESULT
-    }
+    IDAO.State public STATE;
+    IProposal public proposal;
+    IElection public election;
 
-    State public STATE;
-    DAOProposal public proposal;
-
-    bytes32 private title;
-    string private info;
+    IERC20 private token;
     uint256 start_block;
 
-    modifier isState(State _state){
+    modifier isState(IDAO.State _state){
         require(STATE == _state, "DAO::Invalid state transition.");
         _;
     }
 
     modifier proposalPassed {
-        require(proposal.isPassed(), "DAO:Proposal did not pass.");
+        require(proposal.isPassed(), "DAO::Proposal did not pass.");
         _;
     }
 
+    constructor(IDAO.DAOParams memory params){
+            require(params._token != address(0) ,"DAO::Token address null.");
 
-    constructor(
-        bytes32 _title,
-        string memory _info
-        ){
-            title = _title;
-            info = _info;
-            STATE = State.FRESH;
+            token = IERC20(params._token);   
+            start_block = block.number;
+            STATE = IDAO.State.FRESH;
         }
 
-    function intatiate() public onlyOwner isState(State.FRESH) {
-        start_block = block.number;
-        STATE = State.PROPOSAL;
+    function intatiateProposal(bytes32 title, string memory info) public onlyOwner isState(State.FRESH) {
+        STATE = IDAO.State.PROPOSAL;
 
-        proposal = new DAOProposal(start_block + time_horizon, 10000);
+        proposal = Factory.proposal(title, info, time_horizon, 1000);
+        emit IDAO.ProposalStarted(proposal.getStartBlock());
     }
 
-    function startVote() public onlyOwner isState(State.PROPOSAL) proposalPassed {
-        
+    function startElection() public onlyOwner isState(State.PROPOSAL) proposalPassed {
+        emit IDAO.ProposalFinished(proposal.getEndBlock(), proposal.isPassed(), proposal.getTotalSupport());
+        STATE = IDAO.State.ELECTION;
+
+        election = Factory.election(address(token), time_horizon, token.totalSupply() / 2 + 1);
+    }
+
+
+}
+
+library Factory {
+
+    function proposal(
+        bytes32 title,
+        string memory info,
+        uint256 horizon, 
+        uint256 required_support
+        ) internal returns(Proposal){
+        return new Proposal(IProposal.ProposalParams({
+            _title: title,
+            _info: info,  
+            _start_block: block.number,
+            _end_block: block.number + horizon, 
+            _required_support: required_support
+        }));
+    }
+
+    function election(
+        address token, 
+        uint256 horizon, 
+        uint256 required_support
+        ) internal returns(Election){
+        return new Election(IElection.ElectionParams({
+            _token: token,
+            _end_block: block.number + horizon,
+            _required_support: required_support
+        }));
     }
 
 

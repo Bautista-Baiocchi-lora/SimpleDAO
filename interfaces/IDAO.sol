@@ -8,6 +8,7 @@ interface IDAO {
     event ProposalFinished(bool passed, uint256 total_support);
 
     event ElectionStarted(uint256 start_block);
+    event ElectionFinished(uint256 end_block, bool passed);
 
     event VaultCreated(address token, address owner);
 

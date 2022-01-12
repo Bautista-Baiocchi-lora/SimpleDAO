@@ -8,6 +8,8 @@ interface IVault {
 
     function releaseAllFunds() external;
 
-    function storeFunds(uint256 amount) external payable;
+    function storeFunds(address payable sender, uint256 amount) external payable;
+
+    function getAcceptedToken() external view returns(address token);
 
 }

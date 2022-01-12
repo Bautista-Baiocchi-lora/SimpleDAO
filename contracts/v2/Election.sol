@@ -29,15 +29,15 @@ contract Election is IElection {
     }
 
     constructor(IElection.ElectionParams memory params){
-        require(params._token != address(0), "Election::ERC20 address null.");
-        require(params._proposal != address(0), "Election::Proposal address null.");
-        require(IProposal(proposal).isPassed(), "Election::Proposal is not passed.");
+        require(params.token != address(0), "Election::ERC20 address null.");
+        require(params.proposal != address(0), "Election::Proposal address null.");
+        require(IProposal(params.proposal).isPassed(), "Election::Proposal is not passed.");
 
-        token = IERC20(params._token);
-        proposal = params._proposal;
-        start_block = params._start_block;
-        end_block = params._end_block;
-        required_support = params._required_support;
+        token = IERC20(params.token);
+        proposal = params.proposal;
+        start_block = params.start_block;
+        end_block = params.end_block;
+        required_support = params.required_support;
     }
 
     function vote(uint256 amount, Vote choice) public payable hasNotVoted isAlive {

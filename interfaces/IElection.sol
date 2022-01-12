@@ -5,11 +5,12 @@ pragma solidity ^0.8.2;
 interface IElection {
 
     struct ElectionParams {
-        address _token;
-        address _proposal;
-        uint256 _start_block;
-        uint256 _end_block;
-        uint256 _required_support;
+        address token;
+        address vault;
+        address proposal;
+        uint256 start_block;
+        uint256 end_block;
+        uint256 required_support;
     }
 
     enum Vote {

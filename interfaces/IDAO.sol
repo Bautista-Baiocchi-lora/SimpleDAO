@@ -9,8 +9,10 @@ interface IDAO {
 
     event ElectionStarted(uint256 start_block);
 
+    event VaultCreated(address token, address owner);
+
     struct DAOParams {
-        address _token;
+        address token;
     }
 
     enum State {

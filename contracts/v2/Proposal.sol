@@ -30,9 +30,9 @@ contract Proposal is IProposal {
     }
 
     constructor(IProposal.ProposalParams memory params){
-        _start_block = params._start_block;
-        _end_block = params._end_block;
-        _required_support = params._required_support;
+        _start_block = params.start_block;
+        _end_block = params.end_block;
+        _required_support = params.required_support;
     }
 
     function pledgeSupport() override public isNotPledged isAlive {

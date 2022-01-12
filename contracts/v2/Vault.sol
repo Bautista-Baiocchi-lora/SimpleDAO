@@ -24,6 +24,7 @@ contract Vault is IVault, Ownable {
         require(token.transferFrom(msg.sender, address(this), amount), "Vault::Transfer failed."); //emits event
         uint256 current_deposit = deposits[msg.sender];
 
+        //store new wallets
         if(current_deposit == 0){
             wallets.push(msg.sender);
         }
@@ -51,6 +52,8 @@ contract Vault is IVault, Ownable {
                 delete deposits[target];
                 delete wallets[i];
             }
+
+            emit FundsReleased(target, address(token), amount);
         }
     }
 

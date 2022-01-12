@@ -7,6 +7,9 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 
 import "../../interfaces/IDAO.sol";
 import "../../interfaces/IProposal.sol";
+import "../../interfaces/IElection.sol";
+
+import "./Election.sol";
 import "./Proposal.sol";
 
 contract DAO is IDAO, Ownable{
@@ -14,10 +17,9 @@ contract DAO is IDAO, Ownable{
 
     IDAO.State public STATE;
     IProposal public proposal;
+    IElection public election;
 
     IERC20 private token;
-    bytes32 private title;
-    string private info;
     uint256 start_block;
 
     modifier isState(IDAO.State _state){
@@ -33,33 +35,55 @@ contract DAO is IDAO, Ownable{
     constructor(IDAO.DAOParams memory params){
             require(params._token != address(0) ,"DAO::Token address null.");
 
-            token = IERC20(params._token);
-            title = params._title;
-            info = params._info;        
+            token = IERC20(params._token);   
             start_block = block.number;
             STATE = IDAO.State.FRESH;
         }
 
-    function intatiate() public onlyOwner isState(State.FRESH) {
+    function intatiateProposal(bytes32 title, string memory info) public onlyOwner isState(State.FRESH) {
         STATE = IDAO.State.PROPOSAL;
 
-        proposal = _createProposal();
+        proposal = Factory.proposal(title, info, time_horizon, 1000);
         emit IDAO.ProposalStarted(proposal.getStartBlock());
-    }
-
-    function _createProposal() private returns(Proposal){
-        return new Proposal(IProposal.ProposalParams({
-             _start_block: block.number,
-             _end_block: block.number + time_horizon, 
-             _required_support: 10000
-            }));
     }
 
     function startElection() public onlyOwner isState(State.PROPOSAL) proposalPassed {
         emit IDAO.ProposalFinished(proposal.getEndBlock(), proposal.isPassed(), proposal.getTotalSupport());
         STATE = IDAO.State.ELECTION;
 
-        
+        election = Factory.election(address(token), time_horizon, token.totalSupply() / 2 + 1);
+    }
+
+
+}
+
+library Factory {
+
+    function proposal(
+        bytes32 title,
+        string memory info,
+        uint256 horizon, 
+        uint256 required_support
+        ) internal returns(Proposal){
+        return new Proposal(IProposal.ProposalParams({
+            _title: title,
+            _info: info,  
+            _start_block: block.number,
+            _end_block: block.number + horizon, 
+            _required_support: required_support
+        }));
+    }
+
+    function election(
+        address token, 
+        uint256 horizon, 
+        uint256 required_support
+        ) internal returns(Election){
+        return new Election(IElection.ElectionParams({
+            _token: token,
+            _end_block: block.number + horizon,
+            _required_support: required_support
+        }));
     }
 
 

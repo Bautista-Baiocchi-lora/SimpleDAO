@@ -5,6 +5,8 @@ pragma solidity ^0.8.2;
 interface IProposal {
 
     struct ProposalParams {
+        bytes32  _title;
+        string  _info;
         uint256 _start_block;
         uint256 _end_block;
         uint256 _required_support;

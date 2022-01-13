@@ -17,10 +17,10 @@ import "./Vault.sol";
 contract DAO is IDAO, Ownable{
     uint256 constant private time_horizon = 1000;
 
-    IDAO.State public STATE;
-    IProposal public proposal;
-    IElection public election;
-    IVault public vault;
+    IDAO.State private STATE;
+    Proposal private proposal;
+    Election private election;
+    Vault private vault;
 
     IERC20 private token;
     uint256 start_block;
@@ -40,15 +40,15 @@ contract DAO is IDAO, Ownable{
         _;
     }
 
-    constructor(IDAO.DAOParams memory params){
-            require(params.token != address(0) ,"DAO::Token address null.");
+    constructor(address _token){
+            require(_token != address(0) ,"DAO::Token address null.");
 
-            token = IERC20(params.token);   
+            token = IERC20(_token);   
             start_block = block.number;
             STATE = IDAO.State.FRESH;
         }
 
-    function intatiateProposal(bytes32 title, string memory info) public onlyOwner isState(State.FRESH) {
+    function initiateProposal(bytes32 title, string memory info) public onlyOwner isState(State.FRESH) {
         STATE = IDAO.State.PROPOSAL;
 
         //create proposal
@@ -78,6 +78,17 @@ contract DAO is IDAO, Ownable{
         vault.releaseAllFunds();
     }
 
+    function getState() override external view returns(IDAO.State){
+        return STATE;
+    }
+
+    function getGovernanceToken() override external view returns(address){
+        return address(token);
+    }
+
+    function getProposal() override external view returns(Proposal){
+        return proposal;
+    }
 
 }
 

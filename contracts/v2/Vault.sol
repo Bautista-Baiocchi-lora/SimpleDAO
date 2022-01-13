@@ -16,7 +16,7 @@ contract Vault is IVault, Ownable, Pausable {
     IERC20 private token;
 
 
-    constructor(address _token){
+    constructor(address _token) Pausable() Ownable() {
         token = IERC20(_token);
     }
 
@@ -39,7 +39,7 @@ contract Vault is IVault, Ownable, Pausable {
         emit FundsDeposited(sender, address(token), amount);
     }
 
-    function releaseAllFunds() override public onlyOwner {
+    function releaseAllFunds() override external onlyOwner {
         for(uint256 i=0; i< wallets.length; i++){
             address target = wallets[i];
             (bool result, uint256 amount) = releaseFundsTo(target, deposits[target]);
@@ -68,8 +68,12 @@ contract Vault is IVault, Ownable, Pausable {
         return (result, amount);
     }
 
-    function getAcceptedToken() override public view returns(address){
+    function getAcceptedToken() override external view returns(address){
         return address(token);
+    }
+
+    function pause() external onlyOwner {
+        _pause();
     }
 
 }

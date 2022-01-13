@@ -1,6 +1,6 @@
 import pytest
 
-from brownie import GovernanceToken, accounts, reverts
+from brownie import sDAO, accounts, reverts
 
 @pytest.fixture
 def admin(accounts):
@@ -11,8 +11,8 @@ def mock_user(accounts):
     return accounts[1]
 
 @pytest.fixture
-def token(GovernanceToken, admin):
-    return admin.deploy(GovernanceToken)
+def token(sDAO, admin):
+    return admin.deploy(sDAO)
 
 def test_minting_approved(token, admin, mock_user):
     from_a = {"from": admin}
